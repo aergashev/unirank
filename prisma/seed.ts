@@ -1,5 +1,7 @@
 import "dotenv/config"
 import { randomBytes, scryptSync } from "node:crypto"
+import { existsSync, readFileSync } from "node:fs"
+import { join } from "node:path"
 import { PrismaPg } from "@prisma/adapter-pg"
 import { PrismaClient, type Region } from "../generated/prisma"
 import { UNIVERSITIES } from "./universities"
@@ -25,6 +27,21 @@ async function main() {
     added++
   }
   console.log(`universities: ${added} added, ${UNIVERSITIES.length - added} already present`)
+
+  // prisma/logos/<slug>.png is attached to any university that has no logo
+  // yet. One uploaded in the admin panel is never replaced.
+  let logos = 0
+  for (const u of await db.university.findMany({ where: { logoPath: null }, select: { id: true, slug: true } })) {
+    const file = join(__dirname, "logos", `${u.slug}.png`)
+    if (!existsSync(file)) continue
+    const data = new Uint8Array(readFileSync(file))
+    await db.$transaction([
+      db.logo.upsert({ where: { universityId: u.id }, create: { universityId: u.id, mime: "image/png", data }, update: { mime: "image/png", data } }),
+      db.university.update({ where: { id: u.id }, data: { logoPath: "seed1" } }),
+    ])
+    logos++
+  }
+  console.log(`logos: ${logos} attached`)
 
   // The env admin's password follows ADMIN_PASSWORD on every run, so rotating
   // the variable and redeploying is all it takes to change it.

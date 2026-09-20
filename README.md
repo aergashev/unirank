@@ -72,5 +72,7 @@ deleted; the board is never seeded with invented numbers.
 - A real payment provider (see above).
 - Terms of use and a privacy policy — these need real legal text, so no
   placeholder pages were written.
-- University logos: the seed has none; upload them per university in the admin
-  panel. Until then a monogram is shown.
+- Logos for six universities (WIUT, TIIAME, TSPU, MU, Amity, MSU): no clean
+  source was found, so they show a monogram. Upload them in the admin panel.
+  The other 36 are in `prisma/logos/` — taken from each university's own site
+  or Wikimedia Commons — and the seed attaches them wherever no logo is set.

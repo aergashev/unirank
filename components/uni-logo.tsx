@@ -19,8 +19,9 @@ export function UniLogo({
         alt=""
         width={size}
         height={size}
-        className="shrink-0 rounded-full border border-line bg-white object-contain"
-        style={{ width: size, height: size }}
+        // A rounded square, not a circle: round crests fit inside it and square marks keep their corners.
+        className="shrink-0 rounded-[26%] border border-line bg-white object-contain"
+        style={{ width: size, height: size, padding: size * 0.06 }}
       />
     )
   // Whole handle when it fits ("TSUE", "TSUL" must not both read "TS").
@@ -29,7 +30,7 @@ export function UniLogo({
   return (
     <span
       aria-hidden
-      className="grid shrink-0 place-items-center rounded-full font-bold text-white"
+      className="grid shrink-0 place-items-center rounded-[26%] font-bold text-white"
       style={{ width: size, height: size, background: tone(slug), fontSize: size * (letters.length > 3 ? 0.26 : letters.length > 2 ? 0.3 : 0.36), letterSpacing: "-0.02em" }}
     >
       {letters}
