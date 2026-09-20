@@ -50,7 +50,11 @@ export async function endSession() {
   ;(await cookies()).delete(COOKIE)
 }
 
+/** Set at build time by next.config.ts when a deployment still runs on the public, committed secrets. */
+export const adminLocked = () => process.env.ADMIN_LOCKED === "1"
+
 export async function currentAdmin() {
+  if (adminLocked()) return null
   const token = (await cookies()).get(COOKIE)?.value
   if (!token) return null
   try {

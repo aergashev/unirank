@@ -16,9 +16,15 @@ npm run db:seed             # 42 universities at 0 POWER + the first admin
 npm run dev                 # http://localhost:3300
 ```
 
-Admin sign-in uses `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env` (the seed
-creates that account once; changing the variables later does not change the
-password).
+Admin sign-in uses `ADMIN_EMAIL` / `ADMIN_PASSWORD`. The seed syncs that
+account's password to the variable on every run, so rotating it is: change the
+variable, run the seed (on Vercel: redeploy).
+
+`.env` is committed and this repository is public, so those values are for
+local development only. On Vercel, set `SESSION_SECRET`, `ADMIN_PASSWORD`,
+`TEST_GATEWAY_SECRET` and `NEXT_PUBLIC_SITE_URL` as project environment
+variables — until `SESSION_SECRET` differs from the committed one, the build
+locks the admin panel.
 
 Everything in Docker instead: `docker compose --profile web up -d --build`.
 

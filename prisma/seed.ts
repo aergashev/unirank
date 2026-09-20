@@ -26,13 +26,15 @@ async function main() {
   }
   console.log(`universities: ${added} added, ${UNIVERSITIES.length - added} already present`)
 
-  const email = process.env.ADMIN_EMAIL
+  // The env admin's password follows ADMIN_PASSWORD on every run, so rotating
+  // the variable and redeploying is all it takes to change it.
+  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase()
   const password = process.env.ADMIN_PASSWORD
-  if (email && password && !(await db.admin.findUnique({ where: { email } }))) {
+  if (email && password) {
     const salt = randomBytes(16)
-    const hash = scryptSync(password, salt, 64)
-    await db.admin.create({ data: { email, passwordHash: `${salt.toString("hex")}:${hash.toString("hex")}` } })
-    console.log(`admin: created ${email}`)
+    const passwordHash = `${salt.toString("hex")}:${scryptSync(password, salt, 64).toString("hex")}`
+    await db.admin.upsert({ where: { email }, create: { email, passwordHash }, update: { passwordHash } })
+    console.log(`admin: ${email} synced`)
   }
 }
 
