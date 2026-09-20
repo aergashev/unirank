@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+/*
+ * UniRank design tokens. Light, cool paper; deep navy ink; one saturated blue
+ * that belongs to actions; amber reserved for POWER itself. Green/red only
+ * ever mean "moved up / moved down".
+ */
+@theme {
+  --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+
+  --color-paper: #f4f6fb;
+  --color-surface: #ffffff;
+  --color-line: #e4e8f2;
+  --color-line-strong: #cdd4e4;
+
+  --color-ink: #0a1433;
+  --color-ink-2: #454f6b;
+  --color-ink-3: #69728c;
+
+  --color-brand: #2447f0;
+  --color-brand-strong: #1a35c2;
+  --color-brand-soft: #e9eeff;
+  --color-navy: #0b1b4d;
+
+  --color-bolt: #e89a00;
+  --color-bolt-soft: #fff3d6;
+  --color-up: #0e8a45;
+  --color-up-soft: #e3f6ea;
+  --color-down: #d23b40;
+  --color-down-soft: #fdeaea;
+
+  --color-gold: #f3b52f;
+  --color-silver: #a7b1c6;
+  --color-bronze: #d58a5c;
+
+  --radius-control: 14px;
+  --radius-card: 20px;
+
+  --shadow-card: 0 1px 2px rgb(10 20 51 / 0.04), 0 10px 28px -14px rgb(10 20 51 / 0.12);
+  --shadow-pop: 0 24px 64px -16px rgb(10 20 51 / 0.35);
+  --shadow-brand: 0 8px 18px -8px rgb(36 71 240 / 0.55);
+}
+
+@layer base {
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 5rem;
+  }
+  body {
+    font-family: var(--font-sans);
+    font-feature-settings: "tnum" 0;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  ::selection {
+    background: var(--color-brand-soft);
+  }
+  dialog::backdrop {
+    background: rgb(10 20 51 / 0.45);
+    backdrop-filter: blur(3px);
+  }
+}
+
+@layer components {
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* One filled button style exists. A screen gets one of these. */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    padding: 0 1.1rem;
+    border-radius: var(--radius-control);
+    background: var(--color-brand);
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    box-shadow: var(--shadow-brand);
+    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  }
+  .btn-primary:hover { background: var(--color-brand-strong); }
+  .btn-primary:active { transform: translateY(1px); box-shadow: none; }
+  .btn-primary:disabled { opacity: 0.6; cursor: progress; }
+
+  .btn-quiet {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    padding: 0 1rem;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--color-line-strong);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-weight: 600;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .btn-quiet:hover { border-color: var(--color-ink-3); background: var(--color-paper); }
+
+  .field {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 0.9rem;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--color-line-strong);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field::placeholder { color: var(--color-ink-3); }
+  .field:hover { border-color: var(--color-ink-3); }
+  .field:focus { outline: none; border-color: var(--color-brand); box-shadow: 0 0 0 3px var(--color-brand-soft); }
+  .field[aria-invalid="true"] { border-color: var(--color-down); box-shadow: 0 0 0 3px var(--color-down-soft); }
+  textarea.field { padding: 0.7rem 0.9rem; min-height: 84px; resize: vertical; }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+  }
+  .num { font-variant-numeric: tabular-nums; }
+}
+
+/* A row that just changed POWER gets one soft flash, then settles. */
+@keyframes row-flash {
+  from { background: var(--color-bolt-soft); }
+  to { background: transparent; }
+}
+.row-flash { animation: row-flash 1.6s ease-out; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.rise { animation: rise 0.4s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .row-flash, .rise { animation: none; }
+  * { transition: none !important; }
+}

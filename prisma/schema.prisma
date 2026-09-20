@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UniversityType {
+  STATE
+  PRIVATE
+  INTERNATIONAL
+}
+
+enum Region {
+  TASHKENT_CITY
+  TASHKENT_REGION
+  ANDIJAN
+  BUKHARA
+  FERGANA
+  JIZZAKH
+  KARAKALPAKSTAN
+  KASHKADARYA
+  KHOREZM
+  NAMANGAN
+  NAVOI
+  SAMARKAND
+  SIRDARYA
+  SURKHANDARYA
+}
+
+model University {
+  id        String         @id @default(cuid())
+  slug      String         @unique
+  /// Short handle people actually say: "TUIT", "WIUT".
+  shortName String
+  nameUz    String
+  nameRu    String
+  nameEn    String
+  /// Bare registrable host ("tuit.uz"). Unique so a suggestion for a site we
+  /// already list can be recognised instead of creating a duplicate.
+  domain    String         @unique
+  region    Region
+  type      UniversityType
+  /// Bumped on every logo upload and used as the cache-busting query on
+  /// /logo/<slug>. Null falls back to a monogram drawn from shortName.
+  logoPath  String?
+  /// Denormalised sum of settled orders. Only settle/refund in
+  /// lib/orders.ts may change it, always inside the same transaction as the
+  /// order row, so it can be rebuilt from orders at any time.
+  power     Int            @default(0)
+  hidden    Boolean        @default(false)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  orders Order[]
+  events Event[]
+  logo   Logo?
+
+  @@index([hidden, power(sort: Desc), createdAt])
+}
+
+/// Logo bytes live in Postgres rather than on disk: they are small, rarely
+/// change, and this keeps the app stateless on serverless hosting.
+model Logo {
+  universityId String     @id
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  mime         String
+  data         Bytes
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+  REFUNDED
+}
+
+/// One attempt to buy POWER for a university. There are no user accounts:
+/// the supporter is whoever holds the unguessable `publicId` link.
+model Order {
+  id           String      @id @default(cuid())
+  /// The id used in URLs and shown to the supporter.
+  publicId     String      @unique
+  universityId String
+  university   University  @relation(fields: [universityId], references: [id])
+  power        Int
+  /// Price per POWER at the moment of ordering, so a later price change never
+  /// rewrites history.
+  unitPriceUzs Int
+  amountUzs    Int
+  displayName  String?
+  message      String?
+  /// Set by an admin to pull an abusive name/message off public pages without
+  /// touching the payment.
+  muted        Boolean     @default(false)
+  status       OrderStatus @default(PENDING)
+  /// "test", later "payme" / "click"; "admin" for manual grants.
+  provider     String
+  /// The provider's own transaction id, unique per provider so a replayed
+  /// callback cannot settle twice.
+  providerRef  String?
+  locale       String      @default("uz")
+  /// Rank of the university immediately before and after settlement, kept so
+  /// the receipt page can say what the payment achieved.
+  rankBefore   Int?
+  rankAfter    Int?
+  createdAt    DateTime    @default(now())
+  expiresAt    DateTime
+  paidAt       DateTime?
+  refundedAt   DateTime?
+
+  @@unique([provider, providerRef])
+  @@index([universityId, status, paidAt(sort: Desc)])
+  @@index([status, paidAt(sort: Desc)])
+  @@index([status, expiresAt])
+}
+
+enum EventType {
+  POWER
+  RANK_UP
+  RANK_DOWN
+}
+
+/// The public activity feed. Written in the settlement transaction.
+model Event {
+  id           String     @id @default(cuid())
+  type         EventType
+  universityId String
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  /// POWER given (POWER events) or places moved (RANK_* events).
+  amount       Int
+  orderId      String?
+  createdAt    DateTime   @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@index([orderId])
+}
+
+enum SuggestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Suggestion {
+  id        String           @id @default(cuid())
+  name      String
+  website   String
+  domain    String
+  contact   String?
+  status    SuggestionStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+  decidedAt DateTime?
+
+  @@index([status, createdAt(sort: Desc)])
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  audit AuditLog[]
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  admin     Admin    @relation(fields: [adminId], references: [id])
+  action    String
+  target    String
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+}
